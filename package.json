@@ -1,0 +1,27 @@
+{
+    "name": "server",
+    "version": "1.0.0",
+    "description": "production ready server",
+    "main": "server.js",
+    "type": "module",
+    "scripts": {
+        "start": "nodemon server.js",
+        "server:dev": "nodemon server.js",
+        "server:prod": "set NODE_ENV=production&node --env-file=.env server.js",
+        "server:prod:mac": "export NODE_ENV=production && export $(cat .env | xargs) && node server.js"
+    },
+    "author": "Me",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/node": "^20.14.10",
+        "nodemon": "^3.1.4"
+    },
+    "dependencies": {
+        "bcrypt": "^5.1.1",
+        "cookie-parser": "^1.4.6",
+        "cors": "^2.8.5",
+        "cryptr": "^6.3.0",
+        "express": "^4.19.2",
+        "mongodb": "^6.8.0"
+    }
+}
