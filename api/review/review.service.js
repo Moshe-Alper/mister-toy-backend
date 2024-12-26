@@ -8,52 +8,61 @@ export const reviewService = { query, remove, add }
 
 async function query(filterBy = {}) {
     try {
-        const criteria = _buildCriteria(filterBy)
-        const collection = await dbService.getCollection('review')
-
-        var reviews = await collection.aggregate([
-            {
-                $match: criteria,
+      const criteria = _buildCriteria(filterBy)
+      const collection = await dbService.getCollection('review')
+  
+      var reviews = await collection
+        .aggregate([
+          {
+            $match: criteria,
+          },
+          {
+            $lookup: {
+              localField: 'byUserId',
+              from: 'user',
+              foreignField: '_id',
+              as: 'byUser',
             },
-            {
-                $lookup: {
-                    localField: 'byUserId',
-                    from: 'user',
-                    foreignField: '_id',
-                    as: 'byUser',
-                },
+          },
+          {
+            $unwind: '$byUser',
+          },
+          {
+            $lookup: {
+              localField: 'aboutToyId',
+              from: 'toy',
+              foreignField: '_id',
+              as: 'aboutToy',
             },
-            {
-                $unwind: '$byUser',
-            },
-            {
-                $lookup: {
-                    localField: 'aboutUserId',
-                    from: 'user',
-                    foreignField: '_id',
-                    as: 'aboutUser',
-                },
-            },
-            {
-                $unwind: '$aboutUser',
-            },
-            {
-                $project: {
-                    'txt': true,
-                    'byUser._id': true,
-                    'byUser.fullname': true,
-                    'aboutUser._id': true,
-                    'aboutUser.fullname': true,
-                }
-            }
-        ]).toArray()
-
-        return reviews
+          },
+          {
+            $unwind: '$aboutToy',
+          },
+        ])
+        .toArray()
+  
+      reviews = reviews.map(review => {
+        review.byUser = {
+          _id: review.byUser._id,
+          fullname: review.byUser.fullname,
+        }
+        review.aboutToy = {
+          _id: review.aboutToy._id,
+          name: review.aboutToy.name,
+          price: review.aboutToy.price,
+        }
+        review.createdAt = review._id.getTimestamp()
+        delete review.byUserId
+        delete review.aboutToyId
+        return review
+      })
+  
+      return reviews
     } catch (err) {
-        logger.error('cannot get reviews', err)
-        throw err
+      loggerService.error('cannot get reviews', err)
+      throw err
     }
-}
+  }
 
 async function remove(reviewId) {
     try {
@@ -79,7 +88,7 @@ async function add(review) {
     try {
         const reviewToAdd = {
             byUserId: ObjectId.createFromHexString(review.byUserId),
-            aboutUserId: ObjectId.createFromHexString(review.aboutUserId),
+            aboutToyId: ObjectId.createFromHexString(review.aboutToyId),
             txt: review.txt,
         }
         const collection = await dbService.getCollection('review')
@@ -98,5 +107,10 @@ function _buildCriteria(filterBy) {
     if (filterBy.byUserId) {
         criteria.byUserId = ObjectId.createFromHexString(filterBy.byUserId)
     }
+
+    if (filterBy.aboutToyId) {
+        criteria.aboutToyId = ObjectId.createFromHexString(filterBy.aboutToyId)
+    }
+
     return criteria
 }

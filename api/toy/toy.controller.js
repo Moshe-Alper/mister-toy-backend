@@ -13,7 +13,7 @@ export async function getToys(req, res) {
             pageIdx: req.query.pageIdx || undefined,
         }
 
-        console.log('Filter By:', filterBy)
+        // console.log('Filter By:', filterBy)
 
         const toys = await toyService.query(filterBy)
         res.json(toys)
